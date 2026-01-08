@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { ClothingItem, OOTDRecord } from '../types';
 
 interface RecordTodayProps {
@@ -64,6 +64,7 @@ export const RecordToday: React.FC<RecordTodayProps> = ({
       photo: photo || undefined
     };
     onSave(newRecord);
+    setIsEditing(false);
   };
 
   const toggleItem = (id: string) => {
@@ -75,6 +76,91 @@ export const RecordToday: React.FC<RecordTodayProps> = ({
 
   const selectedClothes = clothes.filter(c => selectedItemIds.includes(c.id));
 
+  // --- REVIEW VIEW LAYOUT ---
+  if (!isEditing) {
+    return (
+      <div className="fixed inset-0 bg-[var(--theme-bg)] z-50 flex flex-col p-5 animate-in slide-in-from-bottom duration-500 overflow-y-auto hide-scrollbar">
+        <header className="flex justify-between items-center mb-8 shrink-0">
+          <button onClick={onCancel} className="text-[var(--theme-muted)] text-xs font-bold bg-white px-4 py-2 rounded-full border border-[var(--theme-secondary)] active:scale-95 shadow-sm">
+            返回
+          </button>
+          <div className="text-center">
+            <h1 className="text-sm font-bold text-[var(--theme-primary)] tracking-tight">穿搭回顾</h1>
+            <p className="text-[9px] text-[var(--theme-muted)] font-bold tracking-widest mt-0.5 uppercase">
+              {targetDate.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })} STYLE ARCHIVE
+            </p>
+          </div>
+          <button 
+            onClick={() => setIsEditing(true)}
+            className="text-xs font-bold px-4 py-2 rounded-full bg-white text-[var(--theme-primary)] border border-[var(--theme-secondary)] active:scale-95 shadow-sm"
+          >
+            编辑
+          </button>
+        </header>
+
+        <div className="flex-1 space-y-8 pb-12">
+          {/* Weather Row */}
+          <div className="flex items-center justify-center">
+            <div className="bg-white/80 backdrop-blur px-6 py-3 rounded-full border border-[var(--theme-secondary)] warm-shadow flex items-center space-x-4">
+              <span className="text-2xl">{activeIcon}</span>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-[var(--theme-primary)]">{condition}</span>
+                <span className="text-[10px] text-[var(--theme-muted)] font-bold tracking-tight">{temp}°C</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Hero Photos Row */}
+          <div className="space-y-4">
+            {photo && (
+              <div className="w-full aspect-[3/4] rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white warm-shadow transform rotate-1">
+                <img src={photo} className="w-full h-full object-cover" alt="Full look" />
+              </div>
+            )}
+            
+            {selectedClothes.length > 0 && (
+              <div className={`grid ${photo ? 'grid-cols-2' : 'grid-cols-2'} gap-3 ${photo ? 'mt-6' : ''}`}>
+                {selectedClothes.map((item, idx) => (
+                  <div 
+                    key={item.id} 
+                    className={`aspect-[4/5] bg-white rounded-3xl overflow-hidden border border-[var(--theme-secondary)] warm-shadow ${idx % 2 === 0 ? '-rotate-1' : 'rotate-1'}`}
+                  >
+                    <img src={item.image} className="w-full h-full object-cover" alt={item.name} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* One Sentence / Note */}
+          <div className="text-center px-4 py-8 relative">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-[var(--theme-secondary)] rounded-full opacity-50" />
+            <p className="text-lg font-medium text-[var(--theme-text)] leading-relaxed italic">
+              {note || '这一天云淡风轻，什么也没留下。'}
+            </p>
+            <div className="mt-4 flex justify-center space-x-1">
+               <div className="w-1 h-1 rounded-full bg-[var(--theme-muted)] opacity-20" />
+               <div className="w-1 h-1 rounded-full bg-[var(--theme-muted)] opacity-20" />
+               <div className="w-1 h-1 rounded-full bg-[var(--theme-muted)] opacity-20" />
+            </div>
+          </div>
+
+          {existingRecord && onDelete && (
+            <div className="flex justify-center pt-10">
+              <button 
+                onClick={() => { if(confirm('真的要永久删除这条珍贵的记录吗？')) onDelete(existingRecord.id); }}
+                className="text-[10px] font-bold text-red-400 opacity-60 hover:opacity-100 transition-opacity uppercase tracking-widest"
+              >
+                移除这条记录
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // --- EDITING VIEW LAYOUT (Original) ---
   return (
     <div className="fixed inset-0 bg-[var(--theme-bg)] z-50 flex flex-col p-5 animate-in slide-in-from-bottom duration-500 overflow-y-auto hide-scrollbar">
       <header className="flex justify-between items-center mb-6 shrink-0">
@@ -82,31 +168,18 @@ export const RecordToday: React.FC<RecordTodayProps> = ({
           返回
         </button>
         <div className="text-center">
-          <h1 className="text-sm font-bold text-[var(--theme-primary)] tracking-tight">
-            {isEditing ? '记录此刻' : '穿搭回顾'}
-          </h1>
+          <h1 className="text-sm font-bold text-[var(--theme-primary)] tracking-tight">记录此刻</h1>
           <p className="text-[9px] text-[var(--theme-muted)] font-bold tracking-widest mt-0.5 uppercase">
             {targetDate.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })} STYLE ARCHIVE
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-          {isEditing ? (
-            <button 
-              onClick={handleSave} 
-              disabled={selectedItemIds.length === 0 && !photo}
-              className={`text-xs font-bold px-4 py-2 rounded-full transition-all ${selectedItemIds.length === 0 && !photo ? 'bg-[var(--theme-secondary)] text-stone-300' : 'bg-[var(--theme-primary)] text-white shadow-md active:scale-95'}`}
-            >
-              完成
-            </button>
-          ) : (
-            <button 
-              onClick={() => setIsEditing(true)}
-              className="text-xs font-bold px-4 py-2 rounded-full bg-white text-[var(--theme-primary)] border border-[var(--theme-secondary)] active:scale-95 shadow-sm"
-            >
-              编辑
-            </button>
-          )}
-        </div>
+        <button 
+          onClick={handleSave} 
+          disabled={selectedItemIds.length === 0 && !photo}
+          className={`text-xs font-bold px-4 py-2 rounded-full transition-all ${selectedItemIds.length === 0 && !photo ? 'bg-[var(--theme-secondary)] text-stone-300' : 'bg-[var(--theme-primary)] text-white shadow-md active:scale-95'}`}
+        >
+          完成
+        </button>
       </header>
 
       <div className="flex-1 space-y-6 pb-6">
@@ -114,29 +187,22 @@ export const RecordToday: React.FC<RecordTodayProps> = ({
           <label className="text-[10px] font-bold text-[var(--theme-muted)] uppercase tracking-widest block ml-2">气象感应</label>
           <div className="bg-white border border-[var(--theme-secondary)] rounded-[2rem] p-5 warm-shadow space-y-4">
             <div className="flex flex-col space-y-3">
-              {isEditing ? (
-                <div className="grid grid-cols-5 gap-1.5 bg-[var(--theme-bg)] p-1.5 rounded-[1.25rem] border border-[var(--theme-secondary)]">
-                  {weatherOptions.map(o => (
-                    <button
-                      key={o.label}
-                      onClick={() => setCondition(o.label)}
-                      className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${
-                        condition === o.label 
-                          ? 'bg-white shadow-sm text-[var(--theme-primary)] scale-105' 
-                          : 'text-[var(--theme-muted)] opacity-50 active:scale-90'
-                      }`}
-                    >
-                      <span className="text-lg mb-0.5">{o.icon}</span>
-                      <span className="text-[9px] font-bold">{o.label}</span>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex items-center space-x-3 bg-[var(--theme-bg)] px-4 py-2 rounded-2xl border border-[var(--theme-secondary)] w-fit">
-                  <span className="text-xl">{activeIcon}</span>
-                  <span className="text-xs font-bold text-[var(--theme-text)]">{condition}</span>
-                </div>
-              )}
+              <div className="grid grid-cols-5 gap-1.5 bg-[var(--theme-bg)] p-1.5 rounded-[1.25rem] border border-[var(--theme-secondary)]">
+                {weatherOptions.map(o => (
+                  <button
+                    key={o.label}
+                    onClick={() => setCondition(o.label)}
+                    className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${
+                      condition === o.label 
+                        ? 'bg-white shadow-sm text-[var(--theme-primary)] scale-105' 
+                        : 'text-[var(--theme-muted)] opacity-50 active:scale-90'
+                    }`}
+                  >
+                    <span className="text-lg mb-0.5">{o.icon}</span>
+                    <span className="text-[9px] font-bold">{o.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="flex flex-col space-y-1.5">
@@ -144,20 +210,18 @@ export const RecordToday: React.FC<RecordTodayProps> = ({
                 <span className="text-[9px] font-bold text-[var(--theme-muted)] uppercase tracking-wider">气温</span>
                 <span className="text-base font-bold text-[var(--theme-primary)]">{temp}°C</span>
               </div>
-              {isEditing && (
-                <div className="px-1 py-1">
-                  <input 
-                    type="range" min="-10" max="45" value={temp} 
-                    onChange={(e) => setTemp(parseInt(e.target.value))}
-                    className="w-full h-1.5 rounded-lg cursor-pointer"
-                  />
-                  <div className="flex justify-between mt-1 px-0.5">
-                    <span className="text-[8px] text-[var(--theme-muted)] font-medium">-10°</span>
-                    <span className="text-[8px] text-[var(--theme-muted)] font-medium">15°</span>
-                    <span className="text-[8px] text-[var(--theme-muted)] font-medium">45°</span>
-                  </div>
+              <div className="px-1 py-1">
+                <input 
+                  type="range" min="-10" max="45" value={temp} 
+                  onChange={(e) => setTemp(parseInt(e.target.value))}
+                  className="w-full h-1.5 rounded-lg cursor-pointer"
+                />
+                <div className="flex justify-between mt-1 px-0.5">
+                  <span className="text-[8px] text-[var(--theme-muted)] font-medium">-10°</span>
+                  <span className="text-[8px] text-[var(--theme-muted)] font-medium">15°</span>
+                  <span className="text-[8px] text-[var(--theme-muted)] font-medium">45°</span>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </section>
@@ -166,8 +230,8 @@ export const RecordToday: React.FC<RecordTodayProps> = ({
           <label className="text-[10px] font-bold text-[var(--theme-muted)] uppercase tracking-widest block ml-2">视觉留存</label>
           <div className="grid grid-cols-2 gap-3">
             <div 
-              onClick={() => isEditing && fileInputRef.current?.click()}
-              className={`aspect-square bg-white border border-[var(--theme-secondary)] rounded-[2rem] flex flex-col items-center justify-center overflow-hidden relative warm-shadow ${isEditing ? 'cursor-pointer active:scale-95 transition-transform' : ''}`}
+              onClick={() => fileInputRef.current?.click()}
+              className="aspect-square bg-white border border-[var(--theme-secondary)] rounded-[2rem] flex flex-col items-center justify-center overflow-hidden relative warm-shadow cursor-pointer active:scale-95 transition-transform"
             >
               {photo ? (
                 <img src={photo} className="w-full h-full object-cover" />
@@ -183,8 +247,8 @@ export const RecordToday: React.FC<RecordTodayProps> = ({
             </div>
 
             <div 
-              onClick={() => isEditing && setShowItemPicker(true)}
-              className={`aspect-square bg-white border border-[var(--theme-secondary)] rounded-[2rem] flex flex-col items-center justify-center overflow-hidden relative warm-shadow ${isEditing ? 'cursor-pointer active:scale-95 transition-transform' : ''}`}
+              onClick={() => setShowItemPicker(true)}
+              className="aspect-square bg-white border border-[var(--theme-secondary)] rounded-[2rem] flex flex-col items-center justify-center overflow-hidden relative warm-shadow cursor-pointer active:scale-95 transition-transform"
             >
               {selectedClothes.length > 0 ? (
                 <div className="grid grid-cols-2 gap-0.5 w-full h-full bg-[var(--theme-secondary)]">
@@ -212,32 +276,17 @@ export const RecordToday: React.FC<RecordTodayProps> = ({
         <section className="space-y-2">
           <label className="text-[10px] font-bold text-[var(--theme-muted)] uppercase tracking-widest block ml-2">碎碎念</label>
           <div className="bg-white border border-[var(--theme-secondary)] rounded-[2rem] p-5 warm-shadow min-h-[100px]">
-            {isEditing ? (
-              <textarea 
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="今日的穿搭灵感或心情是..."
-                className="w-full h-24 bg-transparent border-none focus:ring-0 text-sm leading-relaxed text-[var(--theme-text)] resize-none"
-              />
-            ) : (
-              <p className="text-sm leading-relaxed text-[var(--theme-text)] whitespace-pre-wrap">{note || '这一天云淡风轻，什么也没留下。'}</p>
-            )}
+            <textarea 
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="今日的穿搭灵感或心情是..."
+              className="w-full h-24 bg-transparent border-none focus:ring-0 text-sm leading-relaxed text-[var(--theme-text)] resize-none"
+            />
           </div>
         </section>
-
-        {existingRecord && !isEditing && onDelete && (
-          <div className="flex justify-center pt-8 pb-12">
-            <button 
-              onClick={() => { if(confirm('真的要永久删除这条珍贵的记录吗？')) onDelete(existingRecord.id); }}
-              className="text-[11px] font-bold text-red-400 px-10 py-4 rounded-full border border-red-100 bg-white/50 active:bg-red-50 transition-colors shadow-sm"
-            >
-              移除这条记录
-            </button>
-          </div>
-        )}
       </div>
 
-      {showItemPicker && isEditing && (
+      {showItemPicker && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[60] flex flex-col justify-end animate-in fade-in duration-300">
           <div className="bg-white h-[85vh] flex flex-col p-6 rounded-t-[3rem] shadow-2xl animate-in slide-in-from-bottom duration-500 border-t border-[var(--theme-secondary)]">
             <header className="flex justify-between items-center mb-6 shrink-0">

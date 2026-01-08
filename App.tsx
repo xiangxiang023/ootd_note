@@ -62,9 +62,9 @@ const App: React.FC = () => {
     await StorageService.saveRecord(record);
     const updated = await StorageService.getRecords();
     setRecords(updated);
-    setView('calendar');
-    setSelectedCalendarDate(null);
-    setActiveRecord(undefined);
+    // Stay in record view, but switch to review mode
+    setActiveRecord(record);
+    setSelectedCalendarDate(new Date(record.date));
   };
 
   const handleDeleteRecord = async (id: string) => {
@@ -175,7 +175,7 @@ const App: React.FC = () => {
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16m-7 6h7" /></svg>
         </button>
         <button onClick={() => setView('home')} className={`p-2 transition-all rounded-xl ${view === 'home' ? 'bg-[var(--theme-secondary)] text-[var(--theme-primary)] scale-110' : 'text-[var(--theme-muted)] active:scale-90'}`}>
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
         </button>
         <button onClick={() => setView('calendar')} className={`p-2 transition-all rounded-xl ${view === 'calendar' ? 'bg-[var(--theme-secondary)] text-[var(--theme-primary)] scale-110' : 'text-[var(--theme-muted)] active:scale-90'}`}>
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
@@ -184,6 +184,7 @@ const App: React.FC = () => {
 
       {view === 'record' && (
         <RecordToday 
+          key={activeRecord?.id || 'new'}
           clothes={clothes} 
           onSave={handleSaveRecord} 
           onCancel={() => { setView('calendar'); setSelectedCalendarDate(null); setActiveRecord(undefined); }}
