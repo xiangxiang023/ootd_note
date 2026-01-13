@@ -6,7 +6,6 @@
 
 This contains everything you need to run your app locally.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1z75hCjWUrRvgD9bugdNPjsxayKuJu1tt
 
 ## Run Locally
 
@@ -18,3 +17,6 @@ View your app in AI Studio: https://ai.studio/apps/drive/1z75hCjWUrRvgD9bugdNPjs
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+已使用netlify部署，并转换成PWA应用，可在手机端网页或PC端查看：https://ootdnotev2.netlify.app/
+手机端可将网页添加到主屏幕后，在主屏幕打开直接使用，内容存储在本地，使用上与一般app无异。
